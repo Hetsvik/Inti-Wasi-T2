@@ -1,0 +1,26 @@
+
+> inti-wasi-frontend@0.0.0 build
+> npm run ng -- build
+
+
+> inti-wasi-frontend@0.0.0 ng
+> node --env-file=.env.build ./node_modules/@angular/cli/bin/ng.js build
+
+❯ Building...
+✔ Building...
+Initial chunk files | Names         |  Raw size | Estimated transfer size
+main-44LIDY3F.js    | main          | 426.03 kB |               103.08 kB
+styles-JGY4R2RR.css | styles        |  31.68 kB |                 6.18 kB
+
+                    | Initial total | 457.71 kB |               109.26 kB
+
+Lazy chunk files    | Names         |  Raw size | Estimated transfer size
+chunk-CUosTMqS.js   | login         | 121.44 kB |                23.21 kB
+chunk-c88gVuP3.js   | -             |   2.83 kB |                 1.39 kB
+chunk-CwsG2zFz.js   | shell         |   2.52 kB |                 1.13 kB
+chunk-COiBO9E_.js   | inicio        | 937 bytes |               937 bytes
+
+Application bundle generation complete. [6.890 seconds] - 2026-10-16T19:27:10.179Z
+
+Output location: <proyecto>/frontend/dist/inti-wasi-frontend
+

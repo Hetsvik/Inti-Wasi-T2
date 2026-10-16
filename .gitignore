@@ -1,0 +1,15 @@
+# Archivos locales: no publicar secretos ni artefactos generados
+.env
+.env.*
+!.env.example
+!frontend/.env.build
+**/application-local.properties
+**/node_modules/
+**/.angular/
+**/dist/
+**/target/
+**/playwright-report/
+**/test-results/
+*.log
+.DS_Store
+Thumbs.db

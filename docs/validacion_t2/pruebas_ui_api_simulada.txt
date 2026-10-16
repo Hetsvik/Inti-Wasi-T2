@@ -1,0 +1,7 @@
+
+Running 2 tests using 1 worker
+
+  ✓  1 e2e/login-mock.playwright.spec.ts:32:7 › API simulada: login, Inicio y logout de Administrador (4.2s)
+  ✓  2 e2e/login-mock.playwright.spec.ts:32:7 › API simulada: login, Inicio y logout de Operador de Almacén (4.1s)
+
+  2 passed (10.3s)

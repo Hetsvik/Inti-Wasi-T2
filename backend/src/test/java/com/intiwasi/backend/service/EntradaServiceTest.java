@@ -1,0 +1,203 @@
+package com.intiwasi.backend.service;
+
+import com.intiwasi.backend.dto.inventario.EntradaRequest;
+import com.intiwasi.backend.dto.inventario.MovimientoRequest;
+import com.intiwasi.backend.entity.DetalleOrdenCompra;
+import com.intiwasi.backend.entity.Documento;
+import com.intiwasi.backend.entity.Entrada;
+import com.intiwasi.backend.entity.GuiaRemision;
+import com.intiwasi.backend.entity.MovimientoInventario;
+import com.intiwasi.backend.entity.OrdenCompra;
+import com.intiwasi.backend.entity.Producto;
+import com.intiwasi.backend.entity.Proveedor;
+import com.intiwasi.backend.entity.Usuario;
+import com.intiwasi.backend.entity.enums.TipoDocumento;
+import com.intiwasi.backend.exception.ConflictoException;
+import com.intiwasi.backend.repository.DocumentoRepository;
+import com.intiwasi.backend.repository.EntradaRepository;
+import com.intiwasi.backend.repository.GuiaRemisionRepository;
+import com.intiwasi.backend.repository.MovimientoInventarioRepository;
+import com.intiwasi.backend.repository.OrdenCompraRepository;
+import com.intiwasi.backend.repository.ProductoRepository;
+import com.intiwasi.backend.repository.UsuarioRepository;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class EntradaServiceTest {
+
+    @Mock EntradaRepository entradas;
+    @Mock GuiaRemisionRepository guias;
+    @Mock DocumentoRepository documentos;
+    @Mock MovimientoInventarioRepository movimientos;
+    @Mock OrdenCompraRepository ordenes;
+    @Mock ProductoRepository productos;
+    @Mock UsuarioRepository usuarios;
+    @Mock CorreccionInventarioService correcciones;
+    @Mock EntityManager entityManager;
+    @InjectMocks EntradaService service;
+
+    private Producto producto;
+    private OrdenCompra orden;
+    private Usuario usuario;
+
+    @BeforeEach
+    void setUp() {
+        producto = new Producto();
+        producto.setIdProducto(12);
+        producto.setSku("CPU-12");
+        producto.setNomProducto("Procesador");
+        producto.setEstado((byte) 1);
+        producto.setStockActual(4);
+
+        orden = new OrdenCompra();
+        orden.setIdOrden(7);
+
+        Proveedor proveedor = new Proveedor();
+        proveedor.setIdProveedor(2);
+        proveedor.setPrefijoGuia("GUIA-TEST-");
+        orden.setProveedor(proveedor);
+        orden.setEstado("Pendiente");
+
+        DetalleOrdenCompra detalle = new DetalleOrdenCompra();
+        detalle.setProducto(producto);
+        detalle.setCantidad(10);
+        orden.agregarDetalle(detalle);
+
+        usuario = new Usuario();
+        usuario.setIdUsuario(3);
+        usuario.setNomUsuario("Responsable");
+    }
+
+    @AfterEach
+    void clearAuthentication() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void registraRecepcionParcialValida() {
+        prepararRecepcion(2, 3);
+
+        var respuesta = service.registrar(request(12, 3));
+
+        assertEquals(40, respuesta.getIdEntrada());
+        assertEquals(7, respuesta.getIdOrden());
+        assertEquals(3, respuesta.getMovimientos().getFirst().getCantidad());
+        comprobarGuardado(3);
+    }
+
+    @Test
+    void rechazaGuiaYaRegistradaParaElProveedor() {
+        when(ordenes.findByIdConDetallesForUpdate(7))
+                .thenReturn(Optional.of(orden));
+        when(guias.existsByProveedor_IdProveedorAndNumeroGuia(
+                2, "GUIA-TEST-7"
+        )).thenReturn(true);
+
+        assertThrows(
+                ConflictoException.class,
+                () -> service.registrar(request(12, 1))
+        );
+
+        verifyNoInteractions(documentos, movimientos);
+    }
+
+    private EntradaRequest request(int idProducto, int cantidad) {
+        MovimientoRequest movimiento = new MovimientoRequest();
+        movimiento.setIdProducto(idProducto);
+        movimiento.setCantidad(cantidad);
+
+        EntradaRequest request = new EntradaRequest();
+        request.setIdOrden(7);
+        request.setNumeroGuiaRemision(" GUIA-TEST-7 ");
+        request.setMovimientos(List.of(movimiento));
+        return request;
+    }
+
+    private void prepararRecepcion(int recibida, int cantidad) {
+        Documento documentoGuardado = new Documento();
+        documentoGuardado.setIdDocumento(30);
+        documentoGuardado.setUsuario(usuario);
+
+        Entrada entradaGuardada = new Entrada();
+        entradaGuardada.setIdEntrada(40);
+        entradaGuardada.setDocumento(documentoGuardado);
+        entradaGuardada.setOrdenCompra(orden);
+
+        GuiaRemision guia = new GuiaRemision();
+        guia.setNumeroGuia("GUIA-TEST-7");
+        guia.setProveedor(orden.getProveedor());
+        entradaGuardada.setGuia(guia);
+
+        MovimientoInventario movimientoGuardado = new MovimientoInventario();
+        movimientoGuardado.setProducto(producto);
+        movimientoGuardado.setCantidad(cantidad);
+
+        when(ordenes.findByIdConDetallesForUpdate(7))
+                .thenReturn(Optional.of(orden));
+        when(productos.findAllByIdForUpdate(List.of(12)))
+                .thenReturn(List.of(producto));
+        when(entradas.cantidadRecibida(7, 12)).thenReturn(recibida);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "responsable@intiwasi.test",
+                        null,
+                        List.of()
+                )
+        );
+
+        when(usuarios.findByCorreoAndEstado(
+                "responsable@intiwasi.test", 1
+        )).thenReturn(Optional.of(usuario));
+
+        when(documentos.saveAndFlush(any(Documento.class)))
+                .thenReturn(documentoGuardado);
+        when(guias.saveAndFlush(any(GuiaRemision.class)))
+                .thenReturn(guia);
+        when(entradas.saveAndFlush(any(Entrada.class)))
+                .thenReturn(entradaGuardada);
+        when(entradas.findByIdConRelaciones(40))
+                .thenReturn(Optional.of(entradaGuardada));
+        when(movimientos.findByDocumento_IdDocumentoOrderByIdMovimientoAsc(30))
+                .thenReturn(List.of(movimientoGuardado));
+    }
+
+    private void comprobarGuardado(int cantidad) {
+        verify(documentos).saveAndFlush(argThat(
+                documento -> documento.getTipoDocumento() == TipoDocumento.ENTRADA
+                        && documento.getUsuario() == usuario
+        ));
+
+        verify(entradas).saveAndFlush(argThat(
+                entrada -> entrada.getOrdenCompra() == orden
+                        && "GUIA-TEST-7".equals(
+                                entrada.getGuia().getNumeroGuia()
+                        )
+        ));
+
+        verify(movimientos).save(argThat(
+                movimiento -> movimiento.getProducto() == producto
+                        && movimiento.getCantidad() == cantidad
+        ));
+    }
+}

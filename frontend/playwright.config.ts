@@ -2,13 +2,31 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: '*.playwright.spec.ts',
-  reporter: [['list'], ['html', { open: 'never' }]],
-  use: {
-    baseURL: process.env['E2E_BASE_URL'] || 'http://localhost:4200',
-    headless: process.env['E2E_HEADED'] !== '1',
-    viewport: { width: 1280, height: 900 },
-  },
-  expect: { timeout: 10000 },
+  testMatch: 'login.playwright.spec.ts',
+
+  fullyParallel: false,
+  workers: 1,
+  retries: 0,
+
   timeout: 30000,
+  expect: {
+    timeout: 10000,
+  },
+
+  outputDir: 'test-results',
+
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+  ],
+
+  use: {
+    browserName: 'chromium',
+    baseURL: 'http://localhost:4200',
+    viewport: { width: 1280, height: 900 },
+
+    screenshot: 'off',
+    trace: 'off',
+    video: 'off',
+  },
 });

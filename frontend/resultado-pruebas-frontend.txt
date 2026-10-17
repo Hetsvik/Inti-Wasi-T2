@@ -1,0 +1,24 @@
+
+> inti-wasi-frontend@0.0.0 test
+> npm run ng -- test --watch=false
+
+
+> inti-wasi-frontend@0.0.0 ng
+> node --env-file=.env.build ./node_modules/@angular/cli/bin/ng.js test --watch=false
+
+ÔØ» Building...
+Ô£ö Building...
+Application bundle generation complete. [2.532 seconds] - 2026-10-17T16:51:38.292Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90mC:/proyectos/Inti-Wasi-T2/frontend[39m
+
+ [32mÔ£ô[39m [30m[45m inti-wasi-frontend [49m[39m src/app/core/guards.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32mÔ£ô[39m [30m[45m inti-wasi-frontend [49m[39m src/app/features/inicio/inicio.spec.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+ [32mÔ£ô[39m [30m[45m inti-wasi-frontend [49m[39m src/app/core/auth.service.spec.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 169[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+[2m   Start at [22m 11:51:38
+[2m   Duration [22m 2.31s[2m (transform 250ms, setup 1.59s, import 382ms, tests 315ms, environment 3.60s)[22m
+
